@@ -49,10 +49,18 @@ for bot in bot_name:
 # /set_prefixにて設定された各サーバーでのプレフィックスがこの変数に保存される
 guild_prefix = {name: {} for name in bot_name}
 # 各Botのプレフィックスを提示する関数
-async def check_prefix(bot, message):
+# commands.Botに代入する用
+def check_prefix(bot, message):
     guild = message.guild
     if guild:
         return guild_prefix[bot.bot_name].get(guild.id, default_prefix[bot.bot_name])
+    else:
+        return default_prefix[bot.bot_name]
+# 各箇所で使用する用
+def get_prefix(bot, ctx):
+    guild = ctx.guild
+    if guild:
+        return guild_prefix[bot.bot_name].get(guild.id, default_prefix[bot.bot_name])[0]
     else:
         return default_prefix[bot.bot_name]
 
@@ -70,63 +78,94 @@ gauth = GoogleAuth()
 gauth.CommandLineAuth()
 drive = GoogleDrive(gauth)
 
+# エイリアス一覧
+class alias:
+    # cogs.audio_manager
+    play = ['p']
+    replay = ['rp']
+    randomplay = ['rndp']
+    seek = ['sk']
+    pause = []
+    resume = ['re', 'res', 'continue']
+    stop = []
+    search = ['s', 'find']
+    volume = ['vol']
+    # cogs.help_command
+    help = []
+    alias = []
+    # cogs.manage_bot
+    check_prefix = []
+    set_prefix = []
+    reload = []
+    close = []
+    # cogs.others
+    neko = []
+    guild_name = []
+    changelog = []
+    log = []
+    delete = []
+    # cogs.voice_client
+    connect = ['c', 'join', 'summon']
+    disconnect = ['dc', 'leave', 'dis']
+    # cogs.yojirei
+    yojirei = ['y']
+
 # 各メッセージ一覧
-Messages = {
-    'audio_erapsed_time': '**[{}:{:02}]**',
-    'audio_not_paused': ':x:**停止中の朗読はありません**',
-    'audio_not_playing': ':x:**朗読中ではありません**',
-    'audio_pause': '朗読を一時停止',
-    'audio_play': '再生開始',
-    'audio_playing': ':x:**既に朗読を再生中です\n朗読を停止するには/pause、終了するには/stopを使用します**',
-    'audio_play_before': '{}を再生準備します',
-    'audio_play_seek': '{}:{:02}から再生開始',
-    'audio_resume': '朗読再開',
-    'audio_stop': '朗読終了',
-    'audio_stop_finalize': '朗読を完全に終了します',
-    'changelog_bad_argument': ':x:**[表示上限数]は all もしくは 整数値 のみ許容されます**',
-    'check_guild_only': ':warning:このコマンドはサーバーでのみ使用できます',
-    'check_missing_permission': ':x:あなたに権限がありません',
-    'check_not_developer': ':x:このコマンドは開発者のみが使用できます',
-    'choice_number': '**番号を入力してください**',
-    'choosed_audio': '{}が選択されました',
-    'delete_confirm': ':warning:**直近のメッセージを{}件削除します\nよろしいですか？ y/n**',
-    'delete_bad_argument': ':x:**<削除件数>は整数値である必要があります**',
-    'delete_missing_argument': ':x:**/delete <削除件数>**',
-    'download_started': 'ファイルダウンロード開始',
-    'download_finished': 'ファイルダウンロード終了',
-    'file_count': '該当ファイルは{}個です',
-    'file_not_found': ':x:**ファイル名を検索し直してください**',
-    'guild_name': 'ここは {}',
-    'invalid_value': ':x:**値が不正です**',
-    'log_send': 'ログファイルを送信します',
-    'neko1': 'にゃーん',
-    'neko2': '猫です',
-    'play_missing_argument': ':x:**/play <検索ワード>**',
-    'prefix_delete': 'サーバープレフィックスをリセットしました',
-    'prefix_not_found': ':x:**サーバープレフィックスが未登録です**',
-    'prefix_set': 'サーバープレフィックスを登録しました',
-    'prefix_show': 'サーバープレフィックスは {} です',
-    'random_nofile': ':x:**前回の検索データがありません\n/randomplay <検索ワード>を使用してください**',
-    'reload': 'コグファイルを再読み込みしました',
-    'replay': 'もう一度再生します',
-    'replay_nofile': ':x:**音声ファイルが存在しません\n一度/playや/seekを実行してください**',
-    'search_missing_argument': ':x:**/search <検索ワード>**',
-    'seek_bad_argument': ':x:**<開始秒数>は 90 か 1:30 のように指定してください**',
-    'seek_missing_argument': ':x:**/seek <開始秒数> [検索ワード]**',
-    'seek_not_playing': ':x:**/seek <開始秒数>は、再生中のみ使用できます\n/seek <開始秒数> <検索ワード>を使用してください**',
-    'seek_start': '{}:{:02}地点に移動しました',
-    'suggest_replay': '最後に再生した朗読をもう一度再生するには/replayコマンドを使用します',
-    'suggest_resume': '中断した朗読を再開する際は/resumeコマンドを使用します',
-    'suggest_resume_and_stop': '停止した朗読を再開するには/resume、終了するには/stopを使用します',
-    'timeout': ':x:**タイムアウトしました**',
-    'voicechannel_already_connected': ':x:**既に接続しています**',
-    'voicechannel_connected': '接続しました',
-    'voicechannel_disconnected': '切断しました',
-    'voicechannel_not_connect': ':warning:ボイスチャンネルに接続してから実行してください',
-    'voicechannel_not_connect_bot': ':x:**接続していません**',
-    'volume_bad_argument': ':x:**音量は0.0~1.0の範囲で指定してください**',
-    'volume_set': '音量を{}に設定しました',
-    'yojirei_missing_argument': ':x:**/yojirei <検索ワード>**',
-    'yojirei_not_found': '**{}**は未登録です',
-    'yojirei_show': '**{}**:\n{}'
-}
+class Messages:
+    audio_erapsed_time = '**[{}:{:02}]**'
+    audio_not_paused = ':x:**停止中の朗読はありません**'
+    audio_not_playing = ':x:**朗読中ではありません**'
+    audio_pause = '朗読を一時停止'
+    audio_play = '再生開始'
+    audio_playing = ':x:**既に朗読を再生中です\n朗読を停止するには{}pause、終了するには{}stopを使用します**'
+    audio_play_before = '{}を再生準備します'
+    audio_play_seek = '{}:{:02}から再生開始'
+    audio_resume = '朗読再開'
+    audio_stop = '朗読終了'
+    audio_stop_finalize = '朗読を完全に終了します'
+    changelog_bad_argument = ':x:**[表示上限数]は all もしくは 整数値 のみ許容されます**'
+    check_guild_only = ':warning:このコマンドはサーバーでのみ使用できます'
+    check_missing_permission = ':x:あなたに権限がありません'
+    check_not_developer = ':x:このコマンドは開発者のみが使用できます'
+    choice_number = '**番号を入力してください**'
+    choosed_audio = '{}が選択されました'
+    delete_confirm = ':warning:**直近のメッセージを{}件削除します\nよろしいですか？ y/n**'
+    delete_bad_argument = ':x:**<削除件数>は整数値である必要があります**'
+    delete_missing_argument = ':x:**{}delete <削除件数>**'
+    download_started = 'ファイルダウンロード開始'
+    download_finished = 'ファイルダウンロード終了'
+    file_count = '該当ファイルは{}個です'
+    file_not_found = ':x:**ファイル名を検索し直してください**'
+    guild_name = 'ここは {}'
+    invalid_value = ':x:**値が不正です**'
+    log_send = 'ログファイルを送信します'
+    neko1 = 'にゃーん'
+    neko2 = '猫です'
+    play_missing_argument = ':x:**{}play <検索ワード>**'
+    prefix_delete = 'サーバープレフィックスをリセットしました'
+    prefix_not_found = ':x:**サーバープレフィックスが未登録です**'
+    prefix_set = 'サーバープレフィックスを登録しました'
+    prefix_show = 'サーバープレフィックスは {} です'
+    random_nofile = ':x:**前回の検索データがありません\n{}randomplay <検索ワード>を使用してください**'
+    reload = 'コグファイルを再読み込みしました'
+    replay = 'もう一度再生します'
+    replay_nofile = ':x:**音声ファイルが存在しません\n一度{}playや{}seekを実行してください**'
+    search_missing_argument = ':x:**{}search <検索ワード>**'
+    seek_bad_argument = ':x:**<開始秒数>は 90 か 1:30 のように指定してください**'
+    seek_missing_argument = ':x:**{}seek <開始秒数> [検索ワード]**'
+    seek_not_playing = ':x:**{}seek <開始秒数>は、再生中のみ使用できます\n{}seek <開始秒数> <検索ワード>を使用してください**'
+    seek_start = '{}:{:02}地点に移動しました'
+    suggest_replay = '最後に再生した朗読をもう一度再生するには{}replayコマンドを使用します'
+    suggest_resume = '中断した朗読を再開する際は{}resumeコマンドを使用します'
+    suggest_resume_and_stop = '停止した朗読を再開するには{}resume、終了するには{}stopを使用します'
+    timeout = ':x:**タイムアウトしました**'
+    voicechannel_already_connected = ':x:**既に接続しています**'
+    voicechannel_connected = '接続しました'
+    voicechannel_disconnected = '切断しました'
+    voicechannel_not_connect = ':warning:ボイスチャンネルに接続してから実行してください'
+    voicechannel_not_connect_bot = ':x:**接続していません**'
+    volume_bad_argument = ':x:**音量は0.0~1.0の範囲で指定してください**'
+    volume_set = '音量を{}に設定しました'
+    yojirei_missing_argument = ':x:**{}yojirei <検索ワード>**'
+    yojirei_not_found = 'その用字例は未登録です'
+    yojirei_show = '**{}**:\n{}'

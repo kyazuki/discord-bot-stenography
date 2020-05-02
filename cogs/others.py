@@ -4,7 +4,9 @@ import re
 from discord.ext import commands
 import discord
 
+from settings import alias
 from settings import DEVELOPERS_ID
+from settings import get_prefix
 from settings import logfile
 from settings import Messages
 from settings import neko_channel_id
@@ -16,19 +18,19 @@ class others(commands.Cog):
         self.bot = bot
 
     # /neko
-    @commands.command()
+    @commands.command(aliases=alias.neko)
     async def neko(self, ctx):
-        await ctx.send(Messages['neko1'])
-        await self.bot.get_channel(neko_channel_id).send(Messages['neko2'])
+        await ctx.send(Messages.neko1)
+        await self.bot.get_channel(neko_channel_id).send(Messages.neko2)
     
     # /guild_name
-    @commands.command()
+    @commands.command(aliases=alias.guild_name)
     @commands.guild_only()
     async def guild_name(self, ctx):
-        await ctx.send(Messages['guild_name'].format(ctx.guild.name))
+        await ctx.send(Messages.guild_name.format(ctx.guild.name))
 
     # /changelog [all | 表示上限数]
-    @commands.command()
+    @commands.command(aliases=alias.changelog)
     async def changelog(self, ctx, max_num = '1'):
         match_pattern = re.match(r'[0-9]+', max_num)
         max = None
@@ -51,32 +53,32 @@ class others(commands.Cog):
             embed = discord.Embed(title='Change Log', description=desc)
             await ctx.send(embed = embed)
         else:
-            await ctx.send(Messages['changelog_bad_argument'])
+            await ctx.send(Messages.changelog_bad_argument)
     
     # /log
-    @commands.command()
+    @commands.command(aliases=alias.log)
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def log(self, ctx):
-        await ctx.send(Messages['log_send'], file=discord.File(logfile[self.bot.bot_name]))
+        await ctx.send(Messages.log_send, file=discord.File(logfile[self.bot.bot_name]))
     @log.error
     async def log_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
-            await ctx.send(Messages['check_not_developer'])
+            await ctx.send(Messages.check_not_developer)
         else:
             raise
     
     # /delete <削除件数>
-    @commands.command()
+    @commands.command(aliases=alias.delete)
     @commands.guild_only()
     @commands.has_permissions(manage_messages = True)
     async def delete(self, ctx, limit: int):
-        m = await ctx.send(Messages['delete_confirm'].format(limit))
+        m = await ctx.send(Messages.delete_confirm.format(limit))
         def check(m):
             return re.fullmatch(r'[yn]', m.content) and m.channel == ctx.channel and m.author == ctx.author
         try:
             msg = await self.bot.wait_for('message', check = check, timeout = 30.0)
         except asyncio.TimeoutError:
-            await m.edit(content=Messages['timeout'], embed=None)
+            await m.edit(content=Messages.timeout, embed=None)
         else:
             if msg.content == 'y':
                 await msg.delete()
@@ -91,9 +93,9 @@ class others(commands.Cog):
         elif isinstance(error, commands.MissingPermissions):
             pass
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(Messages['delete_missing_argument'])
+            await ctx.send(Messages.delete_missing_argument.format(get_prefix(self.bot, ctx)))
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(Messages['delete_bad_argument'])
+            await ctx.send(Messages.delete_bad_argument)
         else:
             raise
 

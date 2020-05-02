@@ -71,10 +71,10 @@ class discordBot(commands.Bot):
         """
         # guild_onlyが指定されているコマンドをDMで送られたときに起こるエラー
         if isinstance(exception, commands.NoPrivateMessage):
-            await context.send(Messages['check_guild_only'])
+            await context.send(Messages.check_guild_only)
         # has_permissionが指定されているコマンドを、権限のない人が使用したときに起こるエラー
         elif isinstance(exception, commands.MissingPermissions):
-            await context.send(Messages['check_missing_permission'])
+            await context.send(Messages.check_missing_permission)
         # 存在しないコマンドを送られたときに起こるエラー
         elif isinstance(exception, commands.CommandNotFound):
             # passは何もしない
