@@ -5,7 +5,9 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
 token = [
-    os.environ['DISCORD_BOT_TOKEN']
+    os.environ['DISCORD_BOT1_TOKEN'],
+    os.environ['DISCORD_BOT2_TOKEN'],
+    os.environ['DISCORD_BOT3_TOKEN']
     ]
 
 bot_name = ['bot{}'.format(i + 1) for i in range(len(token))]
