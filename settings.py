@@ -21,7 +21,7 @@ audio_suffix_name = '.audio'
 audio_suffix = {name: '-{}'.format(name) + audio_suffix_name for name in bot_name}
 logfile = {name: 'discord-{}.log'.format(name) for name in bot_name}
 
-default_prefix = {}
+default_prefix = {bot_name[1]: '!', bot_name[2]: '$'}
 
 for bot in bot_name:
     if not bot in default_prefix:

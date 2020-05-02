@@ -2,7 +2,6 @@ import asyncio
 import glob
 import logging
 import os
-from threading import Thread
 
 from discord.ext import commands
 import discord
@@ -72,19 +71,15 @@ class discordBot(commands.Bot):
         else:
             return await super().on_command_error(context, exception)
     
+    async def on_disconnect(self):
+        print('{0.bot_name}: Logged out as {0.user}'.format(self))
+    
 if __name__ == '__main__':
-    """
-    threads = []
-    for i, name in enumerate(bot_name):
-        threads.append(Thread(target=discordBot(check_prefix, name).run, args=(token[i],)))
-
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    """
-
-    discordBot(check_prefix, bot_name[0]).run(token[0])
+    
+    loop = asyncio.get_event_loop()
+    tasks = [loop.create_task(discordBot(check_prefix, bot_name[i]).start(token[i])) for i in range(len(bot_name))]
+    gathered = asyncio.gather(*tasks, loop = loop)
+    loop.run_until_complete(gathered)
 
     for path in glob.glob('*' + audio_suffix_name):
         if os.path.isfile(path):
