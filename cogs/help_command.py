@@ -24,10 +24,10 @@ class help_command(commands.Cog):
         embed.add_field(name='/disconnect', value='ボイスチャンネルから切断します', inline=False)
         embed.add_field(name='/neko', value='にゃーん', inline=False)
         if ctx.guild:
-            name = ctx.guild.get_member(self.user.id).nick
+            name = ctx.guild.get_member(self.bot.user.id).nick
         else:
-            name = self.user.name
-        embed.set_author(name=name, url=self.user.avatar_url_as(static_format='png', size=128), icon_url=self.user.avatar_url_as(static_format='png', size=128))
+            name = self.bot.user.name
+        embed.set_author(name=name, url=self.bot.user.avatar_url_as(static_format='png', size=128), icon_url=self.bot.user.avatar_url_as(static_format='png', size=128))
         await ctx.channel.send(embed = embed)
 
     # /alias
@@ -42,10 +42,10 @@ class help_command(commands.Cog):
         embed.add_field(name='/connect', value='/c', inline=False)
         embed.add_field(name='/disconnect', value='/dc', inline=False)
         if ctx.guild:
-            name = ctx.guild.get_member(self.user.id).nick
+            name = ctx.guild.get_member(self.bot.user.id).nick
         else:
-            name = self.user.name
-        embed.set_author(name=name, url=self.user.avatar_url_as(static_format='png', size=128), icon_url=self.user.avatar_url_as(static_format='png', size=128))
+            name = self.bot.user.name
+        embed.set_author(name=name, url=self.bot.user.avatar_url_as(static_format='png', size=128), icon_url=self.bot.user.avatar_url_as(static_format='png', size=128))
         await ctx.channel.send(embed = embed)
 
 def setup(bot):
