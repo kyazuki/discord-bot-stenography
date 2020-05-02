@@ -2,6 +2,7 @@ import asyncio
 import glob
 import logging
 import os
+import re
 
 from discord.ext import commands
 import discord
@@ -35,6 +36,10 @@ class discordBot(commands.Bot):
         # bot_nameを取得
         self.bot_name = bot_name
 
+        # 現バージョンを取得
+        with open('./changelog.txt', mode = 'r', encoding = 'UTF-8') as f:
+            self.version = re.match(r'v[0-9]+.[0-9]+.[0-9]+', f.readline()).group()
+
         # cogsフォルダ直下の.pyファイルを読み込み
         for cog in EXTENSIONS:
             self.load_extension(cog)
@@ -46,7 +51,7 @@ class discordBot(commands.Bot):
         指定されたチャンネルに再起動した旨をメッセージ送信。
         """
         print('{0.bot_name}: Logged in as {0.user}'.format(self))
-        await self.change_presence(activity = discord.Game('Type help'))
+        await self.change_presence(activity = discord.Game(self.version))
         # await self.get_channel(703931482275709038).send('Botが再起動しました')
     
     async def on_message(self, message):
