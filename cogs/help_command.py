@@ -49,4 +49,4 @@ class help_command(commands.Cog):
         await ctx.channel.send(embed = embed)
 
 def setup(bot):
-    bot.add_cog(help(bot))
+    bot.add_cog(help_command(bot))
