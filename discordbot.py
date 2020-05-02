@@ -34,7 +34,7 @@ class discordBot(commands.Bot):
     async def on_ready(self):
         print('{0.bot_name}: Logged in as {0.user}'.format(self))
         await self.change_presence(activity = discord.Game('Type help'))
-        await self.get_channel(703931482275709038).send('Botが再起動しました')
+        # await self.get_channel(703931482275709038).send('Botが再起動しました')
     
     async def on_message(self, message):
         if message.author == self.user:

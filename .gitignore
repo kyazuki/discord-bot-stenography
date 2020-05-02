@@ -1,5 +1,5 @@
 __pycache__
-.DS_Store
+bot-env
 *.audio
 *.log
 yojirei.csv
