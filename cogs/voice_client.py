@@ -4,13 +4,14 @@ import discord
 from settings import Messages
 
 class voice_client(commands.Cog):
-    
+    """ ボイスチャンネル系のコマンドをまとめたクラス
+    """
     def __init__(self, bot):
         self.bot = bot
 
+    # /connect
     @commands.command(aliases=['c'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def connect(self, ctx):
         await ctx.author.voice.channel.connect()
         await ctx.send(Messages['voicechannel_connected'])
@@ -31,9 +32,9 @@ class voice_client(commands.Cog):
         else:
             raise
     
+    # /disconnect
     @commands.command(aliases=['dc'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def disconnect(self, ctx):
         await ctx.guild.voice_client.disconnect()
         await ctx.send(Messages['voicechannel_disconnected'])

@@ -10,24 +10,25 @@ from settings import Messages
 from settings import neko_channel_id
 
 class others(commands.Cog):
-    
+    """ 分類し難いコマンドをまとめたクラス
+    """
     def __init__(self, bot):
         self.bot = bot
 
+    # /neko
     @commands.command()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def neko(self, ctx):
         await ctx.send(Messages['neko1'])
         await self.bot.get_channel(neko_channel_id).send(Messages['neko2'])
     
+    # /guild_name
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def guild_name(self, ctx):
         await ctx.send(Messages['guild_name'].format(ctx.guild.name))
 
+    # /changelog [all | 表示上限数]
     @commands.command()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def changelog(self, ctx, max_num = '1'):
         match_pattern = re.match(r'[0-9]+', max_num)
         max = None
@@ -52,9 +53,9 @@ class others(commands.Cog):
         else:
             await ctx.send(Messages['changelog_bad_argument'])
     
+    # /log
     @commands.command()
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def log(self, ctx):
         await ctx.send(Messages['log_send'], file=discord.File(logfile[self.bot.bot_name]))
     @log.error
@@ -64,10 +65,10 @@ class others(commands.Cog):
         else:
             raise
     
+    # /delete <削除件数>
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(manage_messages = True)
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def delete(self, ctx, limit: int):
         m = await ctx.send(Messages['delete_confirm'].format(limit))
         def check(m):

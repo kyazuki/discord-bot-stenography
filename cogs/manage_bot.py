@@ -6,13 +6,14 @@ from settings import guild_prefix
 from settings import Messages
 
 class manage_bot(commands.Cog):
-    
+    """ Bot管理周りのコマンドをまとめたクラス
+    """
     def __init__(self, bot):
         self.bot = bot
 
+    # /check_prefix
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def check_prefix(self, ctx):
         await ctx.send(Messages['prefix_show'].format(', '.join(guild_prefix[self.bot.bot_name][ctx.guild.id])))
     @check_prefix.error
@@ -26,10 +27,10 @@ class manage_bot(commands.Cog):
                 raise
         else:
             raise
-    
+
+    # /set_prefix <プレフィックス(複数可)>    
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def set_prefix(self, ctx, *, prefixes=''):
         if prefixes.split():
             guild_prefix[self.bot.bot_name][ctx.guild.id] = prefixes.split()
@@ -48,7 +49,8 @@ class manage_bot(commands.Cog):
                 raise
         else:
             raise
-
+    
+    # /reload
     @commands.command()
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def reload(self, ctx):
@@ -61,7 +63,8 @@ class manage_bot(commands.Cog):
             await ctx.send(Messages['check_not_developer'])
         else:
             raise
-
+    
+    # /close
     @commands.command()
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def close(self, ctx):

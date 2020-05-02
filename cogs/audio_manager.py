@@ -16,7 +16,8 @@ from settings import randomfile
 from settings import drive
 
 class audio_manager(commands.Cog):
-    
+    """ 音声ファイル関連のコマンドをまとめたクラス
+    """
     def __init__(self, bot):
         self.bot = bot
 
@@ -53,7 +54,7 @@ class audio_manager(commands.Cog):
 
     async def choice_audio(self, search_words, fileList, guild, channel, author, offset = 0):
         """ドライブのファイルのリストを一覧にしたEmbedメッセージを送信し、
-        1~10の数字がタイプされると対応したファイルを再生します
+        数字がタイプされると対応したファイルを再生します
 
         オプション引数として整数値を受け取ると、
         その秒数から音声ファイルを再生します
@@ -123,9 +124,9 @@ class audio_manager(commands.Cog):
         if error:
             raise error
 
+    # /play <検索ワード> 
     @commands.command(aliases=['p'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def play(self, ctx, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
             await ctx.send(Messages['voicechannel_not_connect'])
@@ -156,9 +157,9 @@ class audio_manager(commands.Cog):
         elif len(fileList) <= 0:
             await ctx.send(Messages['file_not_found'])            
 
+    # /replay
     @commands.command(aliases=['rp'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def replay(self, ctx):
         if ctx.author.voice is None or ctx.author.voice.afk:
             await ctx.send(Messages['voicechannel_not_connect'])
@@ -184,9 +185,9 @@ class audio_manager(commands.Cog):
         else:
             await ctx.send(Messages['replay_nofile'])
     
+    # /randomplay [検索ワード]
     @commands.command(aliases=['rndp'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def randomplay(self, ctx, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
             await ctx.send(Messages['voicechannel_not_connect'])
@@ -206,9 +207,9 @@ class audio_manager(commands.Cog):
             else:
                 await ctx.send(Messages['random_nofile'])
 
+    # /seek <開始秒数> [検索ワード]
     @commands.command(aliases=['sk'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def seek(self, ctx, time, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
             await ctx.send(Messages['voicechannel_not_connect'])
@@ -252,10 +253,10 @@ class audio_manager(commands.Cog):
             await ctx.send(Messages['seek_missing_argument'])
         else:
             raise
-
+    
+    # /pause
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def pause(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client:
@@ -279,9 +280,9 @@ class audio_manager(commands.Cog):
         else:
              await ctx.send(Messages['audio_not_playing'])
     
+    # /resume
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def resume(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client:
@@ -306,9 +307,9 @@ class audio_manager(commands.Cog):
         else:
              await ctx.send(Messages['audio_not_paused'])
     
+    # /stop
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def stop(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client and voice_client.is_playing():
@@ -329,9 +330,9 @@ class audio_manager(commands.Cog):
         else:
             await ctx.send(Messages['audio_not_playing'])
     
+    # /search <検索ワード>
     @commands.command(aliases=['s'])
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def search(self, ctx, *args):
         if not args:
             await ctx.send(Messages['search_missing_argument'])
@@ -350,15 +351,18 @@ class audio_manager(commands.Cog):
             await m.clear_reactions()
             await m.edit(content=Messages['timeout'], embed=None)
     
+    # /volume <音量>
     @commands.command()
     @commands.guild_only()
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def volume(self, ctx, input_volume: float):
         voice_client = ctx.guild.voice_client
         if voice_client is None or voice_client.source is None:
             await ctx.send(Messages['audio_not_playing'])
             return
 
+        if input_volume > 1.0:
+            raise commands.BadArgument()
+        
         voice_client.source.volume = input_volume
         await ctx.send(Messages['volume_set'].format(input_volume))
     @volume.error
@@ -369,29 +373,40 @@ class audio_manager(commands.Cog):
             await ctx.send(Messages['volume_bad_argument'])
         else:
             raise
-
+    
+    # リアクション(絵文字)がメッセージにつけられたときに呼び出される関数
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
+        # Botによるリアクションなら無視
         if user.bot:
             return
         
         message = reaction.message
         emoji = reaction.emoji
         
-        if not reaction.message.embeds:
+        # メッセージが自分自身のものでなければスルー
+        # Embedメッセージでなければスルー
+        if message.author != self.bot.user or not reaction.message.embeds:
             return
         
         embed = message.embeds[0]
 
+        # EmbedのタイトルがSearch: でなければスルー
+        # リアクションが ◀️, ▶️ でなければスルー
         if not embed.title or not embed.title.startswith('Search: ') or not emoji in {'◀️', '▶️'}:
             return
         
+        # まずそのユーザーによるリアクションを削除
         await reaction.remove(user)
+        # タイトルから検索ワードを抽出し、再検索
         fileList = self.search_audio_in_drive(embed.title[len('Search: '):].split(', '))
+        # Embedメッセージから現在のページ数を抽出
         now_page = int(re.search(r'[0-9]+', embed.footer.text).group())
+        # ファイルの数から最大ページ数を計算
         full_pages = len(fileList) // 10
         if len(fileList) % 10:
             full_pages += 1
+        # 現在のページ数を更新
         dlt = 0
         if emoji == '◀️':
             dlt = -1
@@ -400,6 +415,7 @@ class audio_manager(commands.Cog):
         if not 1 <= now_page + dlt <= full_pages:
             return
         now_page += dlt
+        # ファイルの一覧を更新
         desc = ''
         count = 0
         for f in fileList[(now_page - 1) * 10:]:
@@ -407,8 +423,10 @@ class audio_manager(commands.Cog):
             desc += '`{}.` {}\n\n'.format((now_page - 1) * 10 + count, f['title'])
             if count >= 10:
                 break
-        if '**Type a number to make choice.**' in embed.description:
-            desc += '**Type a number to make choice.**'
+        # 元のメッセージに 番号を入力してください が書かれていたらこっちにも付け加える
+        if Messages['choice_number'] in embed.description:
+            desc += Messages['choice_number']
+        # Embedメッセージを更新
         new_embed = discord.Embed(title=embed.title,description=desc)
         new_embed.set_author(name=embed.author.name,url=embed.author.url,icon_url=embed.author.icon_url)
         new_embed.set_footer(text='page {}/{}'.format(now_page, full_pages))

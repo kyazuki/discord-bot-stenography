@@ -4,12 +4,14 @@ from settings import Messages
 from yojirei_bot import text_analysis
 
 class yojirei(commands.Cog):
-    
+    """ 用字例Botの機能を取り入れたクラス
+    https://twitter.com/yojirei_bot_kai
+    """
     def __init__(self, bot):
         self.bot = bot
 
+    # /yojirei <検索ワード>
     @commands.command(aliases=['y'])
-    @commands.check(lambda ctx: not ctx.author.bot)
     async def yojirei(self, ctx, word):
         try:
             index, yojirei, tip = text_analysis.execute(text_analysis.Mode.SEARCH, '"{}"'.format(word))
