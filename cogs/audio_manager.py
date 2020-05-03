@@ -11,7 +11,7 @@ from settings import alias
 from settings import audio_start_time
 from settings import audio_suffix
 from settings import audio_erapsed_time
-from settings import drive
+from google_auth import drive
 from settings import get_prefix
 from settings import Messages
 from settings import pause_method

@@ -73,11 +73,6 @@ pause_method = {name: {} for name in bot_name}
 # 次に/randomplayを変数なしで使ったときに参照されるので、検索ワードを入力しなくても以前と同じ条件で取得できるように。
 randomfile = {name: {} for name in bot_name}
 
-# Google Driveの認証
-gauth = GoogleAuth()
-gauth.CommandLineAuth()
-drive = GoogleDrive(gauth)
-
 # エイリアス一覧
 class alias:
     # cogs.audio_manager
