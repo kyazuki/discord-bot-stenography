@@ -78,7 +78,7 @@ class others(commands.Cog):
         try:
             msg = await self.bot.wait_for('message', check = check, timeout = 30.0)
         except asyncio.TimeoutError:
-            await m.edit(content=Messages.timeout, embed=None)
+            await m.edit(content=Messages.timeout)
         else:
             if msg.content == 'y':
                 await msg.delete()
@@ -86,6 +86,8 @@ class others(commands.Cog):
                 await ctx.message.delete()
                 async for m in ctx.history(limit = limit):
                     await m.delete()
+            else:
+                await m.edit(content=Messages.delete_cancel)
     @delete.error
     async def delete_error(self, ctx, error):
         if isinstance(error, commands.NoPrivateMessage):
