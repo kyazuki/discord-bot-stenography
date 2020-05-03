@@ -1,4 +1,4 @@
-from google_auth import drive
+from manual_auth import drive
 
 #"共有フォルダ/09.その他"のフォルダID(URLの末端文字列)
 folder_id = '0B6UTBGc4fcPNLTFKYkp6U3I1VWc'
