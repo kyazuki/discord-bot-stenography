@@ -52,7 +52,6 @@ class discordBot(commands.Bot):
         """
         print('{0.bot_name}: Logged in as {0.user}'.format(self))
         await self.change_presence(activity = discord.Game(self.version))
-        # await self.get_channel(703931482275709038).send('Botが再起動しました')
     
     async def on_message(self, message):
         """Botがいるチャンネルで、メッセージが送られると呼び出される関数

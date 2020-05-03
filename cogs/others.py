@@ -9,7 +9,6 @@ from settings import DEVELOPERS_ID
 from settings import get_prefix
 from settings import logfile
 from settings import Messages
-from settings import neko_channel_id
 
 class others(commands.Cog):
     """ 分類し難いコマンドをまとめたクラス
@@ -20,8 +19,7 @@ class others(commands.Cog):
     # /neko
     @commands.command(aliases=alias.neko)
     async def neko(self, ctx):
-        await ctx.send(Messages.neko1)
-        await self.bot.get_channel(neko_channel_id).send(Messages.neko2)
+        await ctx.send(Messages.neko)
     
     # /guild_name
     @commands.command(aliases=alias.guild_name)

@@ -1,28 +1,30 @@
+import json
 import os
 import pathlib
-
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
 
 """ 各Botに割り振るTokenを指定
     上から順番にbot_nameがbot1, bot2, bot3...と割り振られる
 """
-token = [
+try:
+    token = [
     os.environ['DISCORD_BOT1_TOKEN'],
     os.environ['DISCORD_BOT2_TOKEN'],
     os.environ['DISCORD_BOT3_TOKEN']
     ]
+except KeyError:
+    with open('./discord_token.json') as f:
+        key = json.load(f)
+    token = list(key.values())
 
 # bot達のかりそめの名前
 bot_name = ['bot{}'.format(i + 1) for i in range(len(token))]
 
 # 一部コマンドの実行の際に, 開発者かどうかチェックするため, ここにアカウントIDを保管している
-DEVELOPERS_ID = [538704691777896478, 293054784288849920, 277672510823071744]
+# 適宜変更してね
+# 邦文速記研究会: 695631452980904066
+DEVELOPERS_ID = [695631452980904066, 538704691777896478, 293054784288849920, 277672510823071744]
 # cogs直下の.pyファイルを格納するリスト
 EXTENSIONS = [path.parent.name + '.' + path.stem for path in pathlib.Path('./cogs').glob('*.py')]
-
-# /nekoで専用メッセージが送られるチャンネルのID
-neko_channel_id = 703450579711819806
 
 # 音声ファイルの拡張子。拡張子をつける必要はないが、何のファイルか一目でわかるようにつけている
 # ちなみにファイル名全体は {サーバーのID}-{bot_name}.audio となる
@@ -40,7 +42,11 @@ logfile = {name: 'discord-{}.log'.format(name) for name in bot_name}
         bot_nameはTokenで指定した順番に, bot_name[0], bot_name[1], bot_name[2]...となる
         0から始まることに注意
 """
-default_prefix = {bot_name[1]: '!', bot_name[2]: '$'}
+try:
+    default_prefix = {bot_name[1]: '!', bot_name[2]: '$'}
+except IndexError:
+    # 存在しないbot_nameに対してプレフィックスを設定したときに、空っぽで初期化します
+    default_prefix = {}
 
 for bot in bot_name:
     if not bot in default_prefix:
@@ -135,8 +141,7 @@ class Messages:
     guild_name = 'ここは {}'
     invalid_value = ':x:**値が不正です**'
     log_send = 'ログファイルを送信します'
-    neko1 = 'にゃーん'
-    neko2 = '猫です'
+    neko = 'にゃーん'
     play_missing_argument = ':x:**{}play <検索ワード>**'
     prefix_delete = 'サーバープレフィックスをリセットしました'
     prefix_not_found = ':x:**サーバープレフィックスが未登録です**'
