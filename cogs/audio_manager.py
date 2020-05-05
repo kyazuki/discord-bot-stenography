@@ -69,10 +69,12 @@ class audio_manager(commands.Cog):
         def check(m):
             return re.fullmatch(r'[0-9]+', m.content) and m.channel == channel
         try:
-            msg = await self.bot.wait_for('message', check = check, timeout = 30.0)
+            msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
         except asyncio.TimeoutError:
+            await m.clear_reactions()
             await m.edit(content=Messages.timeout, embed=None)
         else:
+            await m.clear_reactions()
             try:
                 file = fileList[int(msg.content) - 1]
             except IndexError:
@@ -80,8 +82,6 @@ class audio_manager(commands.Cog):
             else:
                 await m.edit(content=Messages.choosed_audio.format(file['title']), embed=None)
                 await self.play_audio(file, guild, channel, author, offset, self.after_play_audio)
-        finally:
-            await m.clear_reactions()
 
     async def play_audio(self, file, guild, channel, author, offset = 0, after = None):
         """引数に受けたファイルを再生します
@@ -349,7 +349,7 @@ class audio_manager(commands.Cog):
             if len(fileList) > 10:
                 await m.add_reaction('◀️')
                 await m.add_reaction('▶️')
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
             await m.clear_reactions()
             await m.edit(content=Messages.timeout, embed=None)
     
