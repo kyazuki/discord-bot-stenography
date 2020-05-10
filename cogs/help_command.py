@@ -27,7 +27,7 @@ class help_command(commands.Cog):
         embed.add_field(name=get_prefix(self.bot, ctx)+'disconnect', value='ボイスチャンネルから切断します', inline=False)
         embed.add_field(name=get_prefix(self.bot, ctx)+'neko', value='にゃーん', inline=False)
         if ctx.guild:
-            name = ctx.guild.get_member(self.bot.user.id).nick
+            name = ctx.guild.me.display_name
         else:
             name = self.bot.user.name
         embed.set_author(name=name, url=self.bot.user.avatar_url_as(static_format='png', size=128), icon_url=self.bot.user.avatar_url_as(static_format='png', size=128))
@@ -45,7 +45,7 @@ class help_command(commands.Cog):
         embed.add_field(name=get_prefix(self.bot, ctx)+'connect', value=', '.join(map(lambda s: get_prefix(self.bot, ctx) + s, alias.connect)), inline=False)
         embed.add_field(name=get_prefix(self.bot, ctx)+'disconnect', value=', '.join(map(lambda s: get_prefix(self.bot, ctx) + s, alias.disconnect)), inline=False)
         if ctx.guild:
-            name = ctx.guild.get_member(self.bot.user.id).nick
+            name = ctx.guild.me.display_name
         else:
             name = self.bot.user.name
         embed.set_author(name=name, url=self.bot.user.avatar_url_as(static_format='png', size=128), icon_url=self.bot.user.avatar_url_as(static_format='png', size=128))
