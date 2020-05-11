@@ -7,15 +7,10 @@ import time
 from discord.ext import commands
 import discord
 
-from settings import alias
-from settings import audio_start_time
+from settings import Alias
 from settings import audio_suffix
-from settings import audio_erapsed_time
 from manual_auth import drive
-from settings import get_prefix
 from settings import Messages
-from settings import pause_method
-from settings import randomfile
 
 class audio_manager(commands.Cog):
     """ 音声ファイル関連のコマンドをまとめたクラス
@@ -96,7 +91,7 @@ class audio_manager(commands.Cog):
         file_object = drive.CreateFile({'id': file['id']})
 
         m = await channel.send(Messages.download_started)
-        filename = str(guild.id) + audio_suffix[self.bot.bot_name]
+        filename = '{}-{}.{}'.format(guild.id, self.bot.bot_name, audio_suffix)
         file_object.GetContentFile(filename)
         await m.edit(content=Messages.download_finished)
 
@@ -117,8 +112,8 @@ class audio_manager(commands.Cog):
         elif voice_client.channel != author.voice.channel:
             await voice_client.move_to(author.voice.channel)
         voice_client.play(audio_source, after=after)
-        audio_start_time[self.bot.bot_name][guild.id] = time.perf_counter()
-        audio_erapsed_time[self.bot.bot_name][guild.id] = offset
+        self.bot.data.audio_start_time[guild.id] = time.perf_counter()
+        self.bot.data.audio_erapsed_time[guild.id] = offset
 
     def after_play_audio(self, error):
         """音声ファイルが再生終了したときに呼び出される関数です
@@ -127,7 +122,7 @@ class audio_manager(commands.Cog):
             raise error
 
     # /play <検索ワード> 
-    @commands.command(aliases=alias.play)
+    @commands.command(aliases=Alias.play)
     @commands.guild_only()
     async def play(self, ctx, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
@@ -137,15 +132,15 @@ class audio_manager(commands.Cog):
         if not args:
             voice_client = ctx.guild.voice_client
             if voice_client and voice_client.is_paused():
-                if not ctx.guild.id in pause_method:
-                   pause_method[self.bot.bot_name][ctx.guild.id] = 'None'
+                if not ctx.guild.id in self.bot.data.pause_method:
+                   self.bot.data.pause_method[ctx.guild.id] = 'None'
                 
-                if pause_method[self.bot.bot_name][ctx.guild.id] == 'stop':
-                    await ctx.send(Messages.suggest_replay.format(get_prefix(self.bot, ctx)))
+                if self.bot.data.pause_method[ctx.guild.id] == 'stop':
+                    await ctx.send(Messages.suggest_replay.format(self.bot._get_prefix(ctx)))
                 else:
-                    await ctx.send(Messages.suggest_resume.format(get_prefix(self.bot, ctx)))
+                    await ctx.send(Messages.suggest_resume.format(self.bot._get_prefix(ctx)))
             else:
-                await ctx.send(Messages.play_missing_argument.format(get_prefix(self.bot, ctx)))
+                await ctx.send(Messages.play_missing_argument.format(self.bot._get_prefix(ctx)))
             
             return
         
@@ -160,14 +155,14 @@ class audio_manager(commands.Cog):
             await ctx.send(Messages.file_not_found)            
 
     # /replay
-    @commands.command(aliases=alias.replay)
+    @commands.command(aliases=Alias.replay)
     @commands.guild_only()
     async def replay(self, ctx):
         if ctx.author.voice is None or ctx.author.voice.afk:
             await ctx.send(Messages.voicechannel_not_connect)
             return
         
-        filename = str(ctx.guild.id) + audio_suffix[self.bot.bot_name]
+        filename = '{}-{}.{}'.format(ctx.guild.id, self.bot.bot_name, audio_suffix)
         if os.path.isfile(filename):
             await ctx.send(Messages.replay)
             audio_source = discord.FFmpegPCMAudio(filename)
@@ -182,13 +177,13 @@ class audio_manager(commands.Cog):
             if voice_client and voice_client.is_playing:
                 voice_client.stop()
             voice_client.play(audio_source, after=self.after_play_audio)
-            audio_start_time[self.bot.bot_name][guild.id] = time.perf_counter()
-            audio_erapsed_time[self.bot.bot_name][guild.id] = 0
+            self.bot.data.audio_start_time[guild.id] = time.perf_counter()
+            self.bot.data.audio_erapsed_time[guild.id] = 0
         else:
-            await ctx.send(Messages.replay_nofile.format(get_prefix(self.bot, ctx)))
+            await ctx.send(Messages.replay_nofile.format(self.bot._get_prefix(ctx)))
     
     # /randomplay [検索ワード]
-    @commands.command(aliases=alias.randomplay)
+    @commands.command(aliases=Alias.randomplay)
     @commands.guild_only()
     async def randomplay(self, ctx, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
@@ -196,21 +191,21 @@ class audio_manager(commands.Cog):
             return
         
         if args:
-            randomfile[self.bot.bot_name][ctx.guild.id] = self.search_audio_in_drive(args)
+            self.bot.data.randomfile[ctx.guild.id] = self.search_audio_in_drive(args)
                 
-            if len(randomfile[self.bot.bot_name][ctx.guild.id]) >= 1:
+            if len(self.bot.data.randomfile[ctx.guild.id]) >= 1:
                 search_word = args
-                await self.play_audio(random.choice(randomfile[self.bot.bot_name][ctx.guild.id]), ctx.guild, ctx.channel, ctx.author, after = self.after_play_audio)
-            elif len(randomfile[self.bot.bot_name][ctx.guild.id]) <= 0:
+                await self.play_audio(random.choice(self.bot.data.randomfile[ctx.guild.id]), ctx.guild, ctx.channel, ctx.author, after = self.after_play_audio)
+            elif len(self.bot.data.randomfile[ctx.guild.id]) <= 0:
                 await ctx.send(Messages.file_not_found)
         else:
-            if ctx.guild.id in randomfile:
-                await self.play_audio(random.choice(randomfile[self.bot.bot_name][ctx.guild.id]), ctx.guild, ctx.channel, ctx.author, after = self.after_play_audio)
+            if ctx.guild.id in self.bot.data.randomfile:
+                await self.play_audio(random.choice(self.bot.data.randomfile[ctx.guild.id]), ctx.guild, ctx.channel, ctx.author, after = self.after_play_audio)
             else:
-                await ctx.send(Messages.random_nofile.format(get_prefix(self.bot, ctx)))
+                await ctx.send(Messages.random_nofile.format(self.bot._get_prefix(ctx)))
 
     # /seek <開始秒数> [検索ワード]
-    @commands.command(aliases=alias.seek)
+    @commands.command(aliases=Alias.seek)
     @commands.guild_only()
     async def seek(self, ctx, time, *args):
         if ctx.author.voice is None or ctx.author.voice.afk:
@@ -228,13 +223,13 @@ class audio_manager(commands.Cog):
             if not args:
                 voice_client = ctx.guild.voice_client
                 if voice_client and (voice_client.is_playing() or voice_client.is_paused()):
-                    filename = str(ctx.guild.id) + audio_suffix[self.bot.bot_name]
+                    filename = str(ctx.guild.id) + '{}-{}.{}'.format(ctx.guild.id, self.bot.bot_name, audio_suffix)
                     audio_source = discord.FFmpegPCMAudio(filename, options='-ss ' + str(offset))
                     audio_source = discord.PCMVolumeTransformer(audio_source)
                     voice_client.source = audio_source
                     await ctx.send(Messages.seek_start.format(offset // 60, offset % 60))
                 else:
-                    await ctx.send(Messages.seek_not_playing.format(get_prefix(self.bot, ctx)))
+                    await ctx.send(Messages.seek_not_playing.format(self.bot._get_prefix(ctx)))
             else:
                 fileList = self.search_audio_in_drive(args)
                 await ctx.send(Messages.file_count.format(len(fileList)))
@@ -257,87 +252,87 @@ class audio_manager(commands.Cog):
             raise
     
     # /pause
-    @commands.command(aliases=alias.pause)
+    @commands.command(aliases=Alias.pause)
     @commands.guild_only()
     async def pause(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client:
             if voice_client.is_playing():
-                audio_erapsed_time[self.bot.bot_name][ctx.guild.id] += time.perf_counter() - audio_start_time[self.bot.bot_name][ctx.guild.id]
-                await ctx.send(Messages.audio_pause + ' ' + Messages.audio_erapsed_time.format(int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) // 60, int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) % 60))
-                pause_method[self.bot.bot_name][ctx.guild.id] = 'pause'
+                self.bot.data.audio_erapsed_time[ctx.guild.id] += time.perf_counter() - self.bot.data.audio_start_time[ctx.guild.id]
+                await ctx.send(Messages.audio_pause + ' ' + Messages.audio_erapsed_time.format(int(self.bot.data.audio_erapsed_time[ctx.guild.id]) // 60, int(self.bot.data.audio_erapsed_time[ctx.guild.id]) % 60))
+                self.bot.data.pause_method[ctx.guild.id] = 'pause'
                 voice_client.pause()
             elif voice_client.is_paused():
-                if not ctx.guild.id in pause_method:
-                   pause_method[self.bot.bot_name][ctx.guild.id] = 'None'
+                if not ctx.guild.id in self.bot.data.pause_method:
+                   self.bot.data.pause_method[ctx.guild.id] = 'None'
                 
-                if pause_method[self.bot.bot_name][ctx.guild.id] == 'pause':
-                    audio_start_time[self.bot.bot_name][ctx.guild.id] = time.perf_counter()
+                if self.bot.data.pause_method[ctx.guild.id] == 'pause':
+                    self.bot.data.audio_start_time[ctx.guild.id] = time.perf_counter()
                     await ctx.send(Messages.audio_resume)
                     voice_client.resume()
                 else:
-                    await ctx.send(Messages.audio_not_playing + '\n' + Messages.suggest_resume_and_stop.format(get_prefix(self.bot, ctx)))
+                    await ctx.send(Messages.audio_not_playing + '\n' + Messages.suggest_resume_and_stop.format(self.bot._get_prefix(ctx)))
             else:
                 await ctx.send(Messages.audio_not_playing)
         else:
              await ctx.send(Messages.audio_not_playing)
     
     # /resume
-    @commands.command(aliases=alias.resume)
+    @commands.command(aliases=Alias.resume)
     @commands.guild_only()
     async def resume(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client:
             if voice_client.is_paused():
-                audio_start_time[self.bot.bot_name][ctx.guild.id] = time.perf_counter()
+                self.bot.data.audio_start_time[ctx.guild.id] = time.perf_counter()
                 await ctx.send(Messages.audio_resume)
-                pause_method[self.bot.bot_name][ctx.guild.id] = 'resumeviable'
+                self.bot.data.pause_method[ctx.guild.id] = 'resumeviable'
                 voice_client.resume()
             elif voice_client.is_playing():
-                if not ctx.guild.id in pause_method:
-                   pause_method[self.bot.bot_name][ctx.guild.id] = 'None'
+                if not ctx.guild.id in self.bot.data.pause_method:
+                   self.bot.data.pause_method[ctx.guild.id] = 'None'
                 
-                if pause_method[self.bot.bot_name][ctx.guild.id] == 'resumeviable':
-                    audio_erapsed_time[self.bot.bot_name][ctx.guild.id] += time.perf_counter() - audio_start_time[self.bot.bot_name][ctx.guild.id]
-                    await ctx.send(Messages.audio_pause + ' ' + Messages.audio_erapsed_time.format(int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) // 60, int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) % 60))
-                    pause_method[self.bot.bot_name][ctx.guild.id] = 'resume'
+                if self.bot.data.pause_method[ctx.guild.id] == 'resumeviable':
+                    self.bot.data.audio_erapsed_time[ctx.guild.id] += time.perf_counter() - self.bot.data.audio_start_time[ctx.guild.id]
+                    await ctx.send(Messages.audio_pause + ' ' + Messages.audio_erapsed_time.format(int(self.bot.data.audio_erapsed_time[ctx.guild.id]) // 60, int(self.bot.data.audio_erapsed_time[ctx.guild.id]) % 60))
+                    self.bot.data.pause_method[ctx.guild.id] = 'resume'
                     voice_client.pause()
                 else:
-                    await ctx.send(Messages.audio_playing.format(get_prefix(self.bot, ctx)))
+                    await ctx.send(Messages.audio_playing.format(self.bot._get_prefix(ctx)))
             else:
-                await ctx.send(Messages.audio_not_paused + '\n' + Messages.suggest_replay.format(get_prefix(self.bot, ctx)))
+                await ctx.send(Messages.audio_not_paused + '\n' + Messages.suggest_replay.format(self.bot._get_prefix(ctx)))
         else:
              await ctx.send(Messages.audio_not_paused)
     
     # /stop
-    @commands.command(aliases=alias.stop)
+    @commands.command(aliases=Alias.stop)
     @commands.guild_only()
     async def stop(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client and voice_client.is_playing():
-            audio_erapsed_time[self.bot.bot_name][ctx.guild.id] += time.perf_counter() - audio_start_time[self.bot.bot_name][ctx.guild.id]
-            await ctx.send(Messages.audio_stop + ' ' + Messages.audio_erapsed_time.format(int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) // 60, int(audio_erapsed_time[self.bot.bot_name][ctx.guild.id]) % 60))
-            pause_method[self.bot.bot_name][ctx.guild.id] = 'stop'
+            self.bot.data.audio_erapsed_time[ctx.guild.id] += time.perf_counter() - self.bot.data.audio_start_time[ctx.guild.id]
+            await ctx.send(Messages.audio_stop + ' ' + Messages.audio_erapsed_time.format(int(self.bot.data.audio_erapsed_time[ctx.guild.id]) // 60, int(self.bot.data.audio_erapsed_time[ctx.guild.id]) % 60))
+            self.bot.data.pause_method[ctx.guild.id] = 'stop'
             voice_client.pause()
         elif voice_client and voice_client.is_paused():
-            if not ctx.guild.id in pause_method:
-                   pause_method[self.bot.bot_name][ctx.guild.id] = 'None'
+            if not ctx.guild.id in self.bot.data.pause_method:
+                   self.bot.data.pause_method[ctx.guild.id] = 'None'
             
-            if pause_method[self.bot.bot_name][ctx.guild.id] == 'stop':
+            if self.bot.data.pause_method[ctx.guild.id] == 'stop':
                 await ctx.send(Messages.audio_stop_finalize)
                 voice_client.stop()
             else:
-                pause_method[self.bot.bot_name][ctx.guild.id] = 'stop'
+                self.bot.data.pause_method[ctx.guild.id] = 'stop'
                 await ctx.send(Messages.audio_stop)
         else:
             await ctx.send(Messages.audio_not_playing)
     
     # /search <検索ワード>
-    @commands.command(aliases=alias.search)
+    @commands.command(aliases=Alias.search)
     @commands.guild_only()
     async def search(self, ctx, *args):
         if not args:
-            await ctx.send(Messages.search_missing_argument.format(get_prefix(self.bot, ctx)))
+            await ctx.send(Messages.search_missing_argument.format(self.bot._get_prefix(ctx)))
             return
         
         fileList = self.search_audio_in_drive(args)
@@ -354,7 +349,7 @@ class audio_manager(commands.Cog):
             await m.edit(content=Messages.timeout, embed=None)
     
     # /volume <音量>
-    @commands.command(aliases=alias.volume)
+    @commands.command(aliases=Alias.volume)
     @commands.guild_only()
     async def volume(self, ctx, input_volume: float):
         voice_client = ctx.guild.voice_client

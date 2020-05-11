@@ -1,9 +1,8 @@
 from discord.ext import commands
 
-from settings import alias
+from settings import Alias
 from settings import DEVELOPERS_ID
 from settings import EXTENSIONS
-from settings import guild_prefix
 from settings import Messages
 
 class manage_bot(commands.Cog):
@@ -13,10 +12,10 @@ class manage_bot(commands.Cog):
         self.bot = bot
 
     # /check_prefix
-    @commands.command(aliases=alias.check_prefix)
+    @commands.command(aliases=Alias.check_prefix)
     @commands.guild_only()
     async def check_prefix(self, ctx):
-        await ctx.send(Messages.prefix_show.format(', '.join(guild_prefix[self.bot.bot_name][ctx.guild.id])))
+        await ctx.send(Messages.prefix_show.format(', '.join(self.bot.data.guild_prefix[ctx.guild.id])))
     @check_prefix.error
     async def check_prefix_error(self, ctx, error):
         if isinstance(error, commands.NoPrivateMessage):
@@ -30,14 +29,14 @@ class manage_bot(commands.Cog):
             raise
 
     # /set_prefix <プレフィックス(複数可)>    
-    @commands.command(aliases=alias.set_prefix)
+    @commands.command(aliases=Alias.set_prefix)
     @commands.guild_only()
     async def set_prefix(self, ctx, *, prefixes=''):
         if prefixes.split():
-            guild_prefix[self.bot.bot_name][ctx.guild.id] = prefixes.split()
+            self.bot.data.guild_prefix[ctx.guild.id] = prefixes.split()
             await ctx.send(Messages.prefix_set)
         else:
-            del guild_prefix[self.bot.bot_name][ctx.guild.id]
+            del self.bot.data.guild_prefix[ctx.guild.id]
             await ctx.send(Messages.prefix_delete)
     @set_prefix.error
     async def set_prefix_error(self, ctx, error):
@@ -52,7 +51,7 @@ class manage_bot(commands.Cog):
             raise
     
     # /reload
-    @commands.command(aliases=alias.reload)
+    @commands.command(aliases=Alias.reload)
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def reload(self, ctx):
         for cog in EXTENSIONS:
@@ -66,7 +65,7 @@ class manage_bot(commands.Cog):
             raise
     
     # /close
-    @commands.command(aliases=alias.close)
+    @commands.command(aliases=Alias.close)
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def close(self, ctx):
         await self.bot.close()

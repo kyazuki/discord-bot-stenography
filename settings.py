@@ -29,10 +29,9 @@ EXTENSIONS = [path.parent.name + '.' + path.stem for path in pathlib.Path('./cog
 # 音声ファイルの拡張子。拡張子をつける必要はないが、何のファイルか一目でわかるようにつけている
 # ちなみにファイル名全体は {サーバーのID}-{bot_name}.audio となる
 # プログラム正常終了時に音声ファイルは全て削除される
-audio_suffix_name = '.audio'
-audio_suffix = {name: '-{}'.format(name) + audio_suffix_name for name in bot_name}
+audio_suffix = 'audio'
 # ログファイルの名前。 discord-{bot_name}.log となる
-logfile = {name: 'discord-{}.log'.format(name) for name in bot_name}
+logfile = 'discord-{}.log'
 
 """ 各Botデフォルトのプレフィックス(※コマンドの開始記号)の指定
     ここで指定しなかったBotは / に設定される
@@ -43,44 +42,31 @@ logfile = {name: 'discord-{}.log'.format(name) for name in bot_name}
         0から始まることに注意
 """
 try:
-    default_prefix = {bot_name[1]: '!', bot_name[2]: '$'}
+    default_prefixs = {bot_name[1]: '!', bot_name[2]: '$'}
 except IndexError:
     # 存在しないbot_nameに対してプレフィックスを設定したときに、空っぽで初期化します
-    default_prefix = {}
+    # ローカルでテストするときにいちいちサーバー時の設定から変更する手間を省くため
+    default_prefixs = {}
 
-for bot in bot_name:
-    if not bot in default_prefix:
-        default_prefix[bot] = '/'
-
-# /set_prefixにて設定された各サーバーでのプレフィックスがこの変数に保存される
-guild_prefix = {name: {} for name in bot_name}
-# 各Botのプレフィックスを提示する関数
-# commands.Botに代入する用
-def check_prefix(bot, message):
-    guild = message.guild
-    if guild:
-        return guild_prefix[bot.bot_name].get(guild.id, default_prefix[bot.bot_name])
-    else:
-        return default_prefix[bot.bot_name]
-# 各箇所で使用する用
-def get_prefix(bot, ctx):
-    guild = ctx.guild
-    if guild:
-        return guild_prefix[bot.bot_name].get(guild.id, default_prefix[bot.bot_name])[0]
-    else:
-        return default_prefix[bot.bot_name]
-
-# 音声ファイルの再生時間を計算するために使う変数
-audio_start_time = {name: {} for name in bot_name}
-audio_erapsed_time = {name: {} for name in bot_name}
-# /pause, /resume, /stopが使われたときにその旨を保管する変数
-pause_method = {name: {} for name in bot_name}
-# /randomplayを使ったときに、その時点でのドライブのファイルリストを保管する変数
-# 次に/randomplayを変数なしで使ったときに参照されるので、検索ワードを入力しなくても以前と同じ条件で取得できるように。
-randomfile = {name: {} for name in bot_name}
+# 各Botが個別に保管する変数たち
+class Data:
+    def __init__(self, bot_name):
+        self.bot_name = bot_name
+        # デフォルトのプレフィックスを設定。指定がなければ / に。
+        self.default_prefix = default_prefixs.get(bot_name, '/')
+        # /set_prefixにて設定された各サーバーでのプレフィックスがこの変数に保存される
+        self.guild_prefix = {}
+        # 音声ファイルの再生時間を計算するために使う変数
+        self.audio_start_time = {}
+        self.audio_erapsed_time = {}
+        # /pause, /resume, /stopが使われたときにその旨を保管する変数
+        self.pause_method = {}
+        # /randomplayを使ったときに、その時点でのドライブのファイルリストを保管する変数
+        # 次に/randomplayを変数なしで使ったときに参照されるので、検索ワードを入力しなくても以前と同じ条件で取得できるように。
+        self.randomfile = {}
 
 # エイリアス一覧
-class alias:
+class Alias:
     # cogs.audio_manager
     play = ['p']
     replay = ['rp']

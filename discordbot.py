@@ -7,9 +7,9 @@ import re
 from discord.ext import commands
 import discord
 
-from settings import audio_suffix_name
+from settings import audio_suffix
 from settings import bot_name
-from settings import check_prefix
+from settings import Data
 from settings import EXTENSIONS
 from settings import logfile
 from settings import Messages
@@ -20,30 +20,53 @@ class discordBot(commands.Bot):
     ログの生成や、起動時/終了時の処理を記述するために自作している。
     最終的にはcommands.Botが呼び出される
     """
-    def __init__(self, command_prefix, bot_name):
+    def __init__(self, bot_name):
         """インスタンスを生成すると最初に呼び出される関数。
         """
+        # bot_nameを取得
+        self.bot_name = bot_name
+
+        # ログのファイル名を設定
+        self.logfile = logfile.format(bot_name)
+
         # ログの生成
         logger = logging.getLogger('discord')
         logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler(filename=logfile[bot_name], encoding='utf-8', mode='w')
+        handler = logging.FileHandler(filename=self.logfile, encoding='utf-8', mode='w')
         handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         logger.addHandler(handler)
         
-        # commands.Botに丸投げ
-        super().__init__(command_prefix, help_command=None)
-
-        # bot_nameを取得
-        self.bot_name = bot_name
+        # Dataクラスのインスタンスを作成
+        self.data = Data(self.bot_name)
 
         # 現バージョンを取得
         with open('./changelog.txt', mode = 'r', encoding = 'UTF-8') as f:
             self.version = re.match(r'v[0-9]+.[0-9]+.[0-9]+', f.readline()).group()
 
+        # commands.Botに丸投げ
+        super().__init__(self.check_prefix, help_command=None)
+
         # cogsフォルダ直下の.pyファイルを読み込み
         for cog in EXTENSIONS:
             self.load_extension(cog)
 
+    # 各Botのプレフィックスを提示する関数
+    # commands.Botに代入する用
+    def check_prefix(self, bot, message):
+        guild = message.guild
+        if guild:
+            return self.data.guild_prefix.get(guild.id, self.data.default_prefix)
+        else:
+            return self.data.default_prefix
+    
+    # 各箇所で使用する用
+    def _get_prefix(self, ctx):
+        guild = ctx.guild
+        if guild:
+            return self.data.guild_prefix.get(guild.id, self.data.default_prefix)[0]
+        else:
+            return self.data.default_prefix
+    
     async def on_ready(self):
         """Bot起動時に呼び出される関数。
         コンソールにbot_nameとアカウント名を表示し、
@@ -98,12 +121,12 @@ if __name__ == '__main__':
     
     # 各Botをスタートさせる
     loop = asyncio.get_event_loop()
-    tasks = [loop.create_task(discordBot(check_prefix, bot_name[i]).start(token[i])) for i in range(len(bot_name))]
+    tasks = [loop.create_task(discordBot(bot_name[i]).start(token[i])) for i in range(len(bot_name))]
     gathered = asyncio.gather(*tasks, loop = loop)
     loop.run_until_complete(gathered)
 
     # Botが全て終了されるとここにくる
     # ダウンロードした音声ファイルを全削除
-    for path in glob.glob('*' + audio_suffix_name):
+    for path in glob.glob('*.' + audio_suffix):
         if os.path.isfile(path):
             os.remove(path)

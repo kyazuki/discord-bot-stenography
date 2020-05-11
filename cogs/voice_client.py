@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 
-from settings import alias
+from settings import Alias
 from settings import Messages
 
 class voice_client(commands.Cog):
@@ -11,7 +11,7 @@ class voice_client(commands.Cog):
         self.bot = bot
 
     # /connect
-    @commands.command(aliases=alias.connect)
+    @commands.command(aliases=Alias.connect)
     @commands.guild_only()
     async def connect(self, ctx):
         await ctx.author.voice.channel.connect()
@@ -34,7 +34,7 @@ class voice_client(commands.Cog):
             raise
     
     # /disconnect
-    @commands.command(aliases=alias.disconnect)
+    @commands.command(aliases=Alias.disconnect)
     @commands.guild_only()
     async def disconnect(self, ctx):
         await ctx.guild.voice_client.disconnect()

@@ -4,10 +4,8 @@ import re
 from discord.ext import commands
 import discord
 
-from settings import alias
+from settings import Alias
 from settings import DEVELOPERS_ID
-from settings import get_prefix
-from settings import logfile
 from settings import Messages
 
 class others(commands.Cog):
@@ -17,18 +15,18 @@ class others(commands.Cog):
         self.bot = bot
 
     # /neko
-    @commands.command(aliases=alias.neko)
+    @commands.command(aliases=Alias.neko)
     async def neko(self, ctx):
         await ctx.send(Messages.neko)
     
     # /guild_name
-    @commands.command(aliases=alias.guild_name)
+    @commands.command(aliases=Alias.guild_name)
     @commands.guild_only()
     async def guild_name(self, ctx):
         await ctx.send(Messages.guild_name.format(ctx.guild.name))
 
     # /changelog [all | 表示上限数]
-    @commands.command(aliases=alias.changelog)
+    @commands.command(aliases=Alias.changelog)
     async def changelog(self, ctx, max_num = '1'):
         match_pattern = re.match(r'[0-9]+', max_num)
         max = None
@@ -54,10 +52,10 @@ class others(commands.Cog):
             await ctx.send(Messages.changelog_bad_argument)
     
     # /log
-    @commands.command(aliases=alias.log)
+    @commands.command(aliases=Alias.log)
     @commands.check(lambda ctx: ctx.author.id in DEVELOPERS_ID)
     async def log(self, ctx):
-        await ctx.send(Messages.log_send, file=discord.File(logfile[self.bot.bot_name]))
+        await ctx.send(Messages.log_send, file=discord.File(self.bot.logfile))
     @log.error
     async def log_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
@@ -66,7 +64,7 @@ class others(commands.Cog):
             raise
     
     # /delete <削除件数>
-    @commands.command(aliases=alias.delete)
+    @commands.command(aliases=Alias.delete)
     @commands.guild_only()
     @commands.has_permissions(manage_messages = True)
     async def delete(self, ctx, limit: int):
@@ -93,7 +91,7 @@ class others(commands.Cog):
         elif isinstance(error, commands.MissingPermissions):
             pass
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(Messages.delete_missing_argument.format(get_prefix(self.bot, ctx)))
+            await ctx.send(Messages.delete_missing_argument.format(self.bot._get_prefix(ctx)))
         elif isinstance(error, commands.BadArgument):
             await ctx.send(Messages.delete_bad_argument)
         else:
