@@ -223,7 +223,7 @@ class audio_manager(commands.Cog):
             if not args:
                 voice_client = ctx.guild.voice_client
                 if voice_client and (voice_client.is_playing() or voice_client.is_paused()):
-                    filename = str(ctx.guild.id) + '{}-{}.{}'.format(ctx.guild.id, self.bot.bot_name, audio_suffix)
+                    filename = '{}-{}.{}'.format(ctx.guild.id, self.bot.bot_name, audio_suffix)
                     audio_source = discord.FFmpegPCMAudio(filename, options='-ss ' + str(offset))
                     audio_source = discord.PCMVolumeTransformer(audio_source)
                     voice_client.source = audio_source
