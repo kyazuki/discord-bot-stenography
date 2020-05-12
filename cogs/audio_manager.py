@@ -56,27 +56,43 @@ class audio_manager(commands.Cog):
         オプション引数として整数値を受け取ると、
         その秒数から音声ファイルを再生します
         """
+        try:
+            lock = self.bot.data.lock[guild.id]
+        except KeyError:
+            self.bot.data.lock[guild.id] = True
+        else:
+            if lock:
+                await channel.send(Messages.choosed_audio_conflict)
+                return
+            else:
+                self.bot.data.lock[guild.id] = True
+        
         embed = self.embed_audio_list(search_words, fileList, author, True)
         m = await channel.send(embed = embed)
         if len(fileList) > 10:
             await m.add_reaction('◀️')
             await m.add_reaction('▶️')
         def check(m):
-            return re.fullmatch(r'[0-9]+', m.content) and m.channel == channel
+            return re.fullmatch(r'[0-9]+|cancel', m.content) and m.channel == channel
         try:
             msg = await self.bot.wait_for('message', check = check, timeout = 60.0)
         except asyncio.TimeoutError:
+            self.bot.data.lock[guild.id] = False
             await m.clear_reactions()
             await m.edit(content=Messages.timeout, embed=None)
         else:
+            self.bot.data.lock[guild.id] = False
             await m.clear_reactions()
-            try:
-                file = fileList[int(msg.content) - 1]
-            except IndexError:
-                await m.edit(content=Messages.invalid_value, embed=None)
+            if msg.content != 'cancel':
+                try:
+                    file = fileList[int(msg.content) - 1]
+                except IndexError:
+                    await m.edit(content=Messages.invalid_value, embed=None)
+                else:
+                    await m.edit(content=Messages.choosed_audio.format(file['title']), embed=None)
+                    await self.play_audio(file, guild, channel, author, offset, self.after_play_audio)
             else:
-                await m.edit(content=Messages.choosed_audio.format(file['title']), embed=None)
-                await self.play_audio(file, guild, channel, author, offset, self.after_play_audio)
+                await m.edit(content=Messages.choosed_audio_canceled, embed=None)
 
     async def play_audio(self, file, guild, channel, author, offset = 0, after = None):
         """引数に受けたファイルを再生します

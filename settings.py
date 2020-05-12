@@ -64,6 +64,8 @@ class Data:
         # /randomplayを使ったときに、その時点でのドライブのファイルリストを保管する変数
         # 次に/randomplayを変数なしで使ったときに参照されるので、検索ワードを入力しなくても以前と同じ条件で取得できるように。
         self.randomfile = {}
+        # choice_audioが同時に呼び出されないように
+        self.lock = {}
 
 # エイリアス一覧
 class Alias:
@@ -116,6 +118,8 @@ class Messages:
     check_not_developer = ':x:このコマンドは開発者のみが使用できます'
     choice_number = '**番号を入力してください**'
     choosed_audio = '{}が選択されました'
+    choosed_audio_canceled = ':warning:キャンセルされました'
+    choosed_audio_conflict = ':x:**既に選択待ちです\ncancel で解除できます**'
     delete_bad_argument = ':x:**<削除件数>は整数値である必要があります**'
     delete_cancel = 'キャンセルされました'
     delete_confirm = ':warning:**直近のメッセージを{}件削除します\nよろしいですか？ y/n**'
